@@ -1,10 +1,10 @@
 import torch
 import torch.nn as nn
-from .utils import LayerNorm, GELU, FFN, Config
+from .utils import LayerNorm, GELU, FFN
 
 
-config = Config().params
-model_config = config['model']
+# config = Config().params
+# model_config = config['model']
 
 
 class InputEmbedding(nn.Module):
@@ -16,7 +16,10 @@ class InputEmbedding(nn.Module):
 
     def forward(self, x):
         batch_size, seq_len = x.shape
-        # this -1 in expand means "infer this dimension". This meeans that the sequence length dimension will be the same as seq_len
+        # Explaination for the line below:
+        # torch.arange(seq_len) creates a tensor of shape (seq_len,)
+        # unsqueeze(0) adds a new dimension at the front, making it (1, seq_len)
+        # expand(batch_size, -1) expands this tensor to (batch_size, seq_len) by repeating the sequence for each batch
         pos_ids = torch.arange(seq_len, device=x.device).unsqueeze(0).expand(batch_size, -1)
         token_embd = self.token_embedding(x)
         pos_embd = self.position_embedding(pos_ids)
@@ -80,19 +83,19 @@ class MultiHeadAttention(nn.Module):
 
 
 class TransformerBlock(nn.Module):
-    def __init__(self):
+    def __init__(self, config):
         super().__init__()
         self.attention = MultiHeadAttention(
-            model_config['d_model'],
-            model_config['d_model'],
-            model_config['seq_len'],
-            model_config['dropout_rate'],
-            model_config['n_heads']
+            config['d_model'],
+            config['d_model'],
+            config['seq_len'],
+            config['dropout_rate'],
+            config['n_heads']
         )
-        self.ln1 = LayerNorm(model_config['d_model'])
-        self.ln2 = LayerNorm(model_config['d_model'])
-        self.ffn = FFN(model_config['d_model'], model_config['dff'])
-        self.dropout = nn.Dropout(model_config['dropout_rate'])
+        self.ln1 = LayerNorm(config['d_model'])
+        self.ln2 = LayerNorm(config['d_model'])
+        self.ffn = FFN(config['d_model'], config['dff'])
+        self.dropout = nn.Dropout(config['dropout_rate'])
 
     def forward(self, x):
         shortcut = x
@@ -110,21 +113,21 @@ class TransformerBlock(nn.Module):
 
 
 class GPTModel(nn.Module):
-    def __init__(self):
+    def __init__(self, config):
         super().__init__()
         self.input_embeddings = InputEmbedding(
-            model_config['vocab_size'],
-            model_config['d_model'],
-            model_config['seq_len'],
-            model_config['dropout_rate']
+            config['vocab_size'],
+            config['d_model'],
+            config['seq_len'],
+            config['dropout_rate']
         )
 
         self.transformer_blocks = nn.ModuleList([
-            TransformerBlock() for _ in range(model_config['n_layers'])
+            TransformerBlock(config) for _ in range(config['n_layers'])
         ])
 
-        self.final_norm = LayerNorm(model_config['d_model'])
-        self.output_projection = nn.Linear(model_config['d_model'], model_config['vocab_size'], bias=False)
+        self.final_norm = LayerNorm(config['d_model'])
+        self.output_projection = nn.Linear(config['d_model'], config['vocab_size'], bias=False)
 
     def forward(self, x):
         x = self.input_embeddings(x)

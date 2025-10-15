@@ -11,23 +11,31 @@ model:
 
 training:
   batch_size: 32
-  epochs: 10
-  learning_rate: 3e-4
+  epochs: 2
+  learning_rate: 0.0003
   optimizer: adamw
   weight_decay: 0.01
   gradient_clip: 1.0
   device: auto
-  save_dir: checkpoints/gpt2_small
+  save_dir: checkpoints/
+  save_interval: 1
+  early_stopping: true
+  patience: 3
+  min_delta: 0.001
 
 data:
-  train_path: data/train.txt
-  val_path: data/val.txt
-  block_size: 1024
+  # train_path: data/train.txt
+  # val_path: data/val.txt
+  dataset_path: data/the-verdict.txt
+  train_ratio: 0.8
+  batch_size: 16
+  seq_len: 256
+  stride: 32
 
 logging:
   log_interval: 100
   save_interval: 1000
   output_dir: outputs/gpt2_small
 
-device: cuda
+device: auto
 seed: 42

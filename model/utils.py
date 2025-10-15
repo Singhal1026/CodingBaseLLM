@@ -53,20 +53,3 @@ class FFN(nn.Module):
     def forward(self, x):
         return self.layers(x)
     
-
-        
-
-
-# class DropPath(nn.Module):
-#     def __init__(self, drop_prob=None):
-#         super().__init__()
-#         self.drop_prob = drop_prob
-
-#     def forward(self, x):
-#         if self.drop_prob == 0.0 or not self.training:
-#             return x
-#         keep_prob = 1 - self.drop_prob
-#         random_tensor = torch.rand(x.shape[0], 1, 1, 1, device=x.device)
-#         random_tensor = random_tensor < keep_prob
-#         output = x.div(keep_prob) * random_tensor
-#         return output

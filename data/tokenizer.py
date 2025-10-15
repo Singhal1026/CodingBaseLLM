@@ -5,6 +5,7 @@ from transformers import GPT2TokenizerFast
 
 class Tokenizer:
     def __init__(self, path="data/gpt2_encoding", offline: bool = False):
+        self.eos_token_id = 50256  # GPT-2's end-of-sequence token ID
         if offline:
             vocab = f"{path}/encoder.json"
             merges = f"{path}/vocab.bpe"

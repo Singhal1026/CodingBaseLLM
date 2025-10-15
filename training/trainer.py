@@ -21,23 +21,32 @@ class Trainer:
 
     def train(self, train_loader : DataLoader, val_loader: Optional[DataLoader] = None, epochs: Optional[int] = 1) -> None:
         
-        epochs = epochs or self.config['epochs']
+        for cb in self.callbacks:
+            if hasattr(cb, "reset"):
+                cb.reset()
+        
+        epochs = epochs or self.config.get('epochs', 1)
 
         for epoch in range(1, epochs + 1):
-            epoch_loss = self._train_epoch(train_loader, epoch)
-            print(f"Epoch {epoch}/{epochs}, Loss: {epoch_loss:.4f}")
+            print(f"Epoch {epoch}/{epochs}")
 
+            epoch_loss = self._train_epoch(train_loader, epoch)
+             
+            print(f"Training Loss: {epoch_loss:.4f}")
+
+            val_loss = None
             if val_loader is not None:
                 val_loss = self._validate_epoch(val_loader)
                 print(f"Validation Loss: {val_loss:.4f}")
+
             for callback in self.callbacks:
-                callback.on_epoch_end(epoch, self.model, epoch_loss, val_loss if val_loader is not None else None)
+                callback.on_epoch_end(epoch, self.model, epoch_loss, val_loss)
             
 
     def _train_epoch(self, train_loader: DataLoader, epoch: int):
         self.model.train()
         total_loss = 0
-        loop = tqdm(train_loader, desc=f"Training Epoch {epoch}")
+        loop = tqdm(train_loader, desc=f"Training Epoch {epoch}", leave = False)
         for batch in loop:
             X, y = [item.to(self.device) for item in batch]
             self.optimizer.zero_grad()

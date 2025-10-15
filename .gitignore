@@ -111,3 +111,5 @@ dmypy.json
 .pyre/
 
 # Additional
+checkpoints/
+temp.py

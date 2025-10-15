@@ -2,6 +2,7 @@ import torch
 from torch.utils.data import DataLoader
 from model.transformer import GPTModel
 from model.utils import Config
+from model.utils import generate_next_tokens
 from data.tokenizer import Tokenizer
 from data.dataset import TextDataset
 
@@ -30,18 +31,24 @@ def load_data():
     
     with open("data/the-verdict.txt", "r", encoding="utf-8") as f:
         text = f.read()
-        text = text[:5000]  # Use only the first 1000 characters for testing
+        text = text[:4000]  # Use only the first 1000 characters for testing
     
     # print(text)
     # Encode
 
-    data = TextDataset(text, context_length = config['model']['seq_len'])
+    data = TextDataset(text, context_length = config['model']['seq_len'], stride=256)
     loader = DataLoader(data, batch_size=2, shuffle=False)
     for batch in loader:
         tokens, targets = batch
         # print(f"Batch token IDs: {tokens}")
         # print(f"Batch target IDs: {targets}")
-        print(f"Token shape: {tokens.shape}, Target shape: {targets.shape}")
+        # print(f"Token shape: {tokens.shape}, Target shape: {targets.shape}")
+    
+    print(len(data))
+    print(data.num_samples)
+    print(len(data.tokens))
+
+    return data
 
 
 def test_model():
@@ -52,13 +59,29 @@ def test_model():
     # dummy input: 
     batch_size, seq_len = (2, 5)
     # below line creates a tensor of shape (batch_size, seq_len) with random integers in the range [0, vocab_size)
-    dummy_input = torch.randint(0, model_config['vocab_size'], (batch_size, seq_len))
-
+    # dummy_input = torch.randint(0, model_config['vocab_size'], (batch_size, seq_len))
+    data = load_data()
+    loader = DataLoader(data, batch_size=2, shuffle=False)
     model = GPTModel()
-    output = model(dummy_input)
-    print(f"Model output shape: {output.shape}")  # should be (batch_size, seq_len, vocab_size)
+    for batch in loader:
+        dummy_input, _ = batch
+        print(f"Dummy input shape: {dummy_input.shape}")
+        output = model(dummy_input)
+        print(f"Model output shape: {output.shape}")  # should be (batch_size
+        # print(f"Input shape: {dummy_input.shape}")
+        model.eval()
+        generated_op = generate_next_tokens(model, max_new_tokens=3, idx=dummy_input, seq_len=model_config['seq_len'], temperature=1.0, top_k=2)
+        print(f"Generated output shape: {generated_op.shape}")  # should be (batch
+
+    # output = model(dummy_input)
+    # print(f"Model output shape: {output.shape}")  # should be (batch_size, seq_len, vocab_size)
+    # model.eval()
+    # generated_op = generate_next_tokens(model, max_new_tokens=3, idx=dummy_input, seq_len=model_config['seq_len'], temperature=1.0, top_k=2)
+    # print(f"Generated output shape: {generated_op.shape}")  # should be (batch_size, seq_len + max_new_tokens)
+    # print(generated_op)
+
 
 
 if __name__ == "__main__":
-    load_data()
-    # test_model()
+    # load_data()
+    test_model()
