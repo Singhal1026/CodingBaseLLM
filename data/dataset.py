@@ -1,15 +1,20 @@
 import torch
 from torch.utils.data import Dataset
+from typing import List, Union
+from .tokenizer import Tokenizer
 
 
 class TextDataset(Dataset):
-    def __init__(self, text, tokenizer, context_length, stride=1):
+    def __init__(self, text: Union[str, List[str]], context_length, stride=1):
         super().__init__()
-        self.tokenizer = tokenizer
+        self.tokenizer = Tokenizer(offline=True)
         self.context_length = context_length
         self.stride = stride
 
-        self.tokens = tokenizer.encode(text, add_special_tokens=False)
+        if isinstance(text, list):
+            text = " ".join(text)
+
+        self.tokens = self.tokenizer.encode(text)
         self.num_samples = (len(self.tokens) - context_length) // stride
 
     def __len__(self):
