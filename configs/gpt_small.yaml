@@ -37,5 +37,10 @@ logging:
   save_interval: 1000
   output_dir: outputs/gpt2_small
 
+evaluation:
+  batch_size: 16
+  eval_interval: 1000
+  model_checkpoint: checkpoints/latest_checkpoint.pt
+
 device: auto
 seed: 42
