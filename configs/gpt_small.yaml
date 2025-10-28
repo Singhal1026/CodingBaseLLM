@@ -38,8 +38,9 @@ logging:
   output_dir: outputs/gpt2_small
 
 evaluation:
-  batch_size: 16
-  eval_interval: 1000
+  batch_size: 8
+  stride: 32
+  eval_dataset_path: data/eval_data.txt
   model_checkpoint: checkpoints/latest_checkpoint.pt
 
 device: auto

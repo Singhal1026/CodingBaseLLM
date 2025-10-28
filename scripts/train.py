@@ -42,10 +42,10 @@ def device_check(config: dict) -> str:
 
 def create_dataloader(config: dict):
     data_config = config['data']
-    data = data_config.get('dataset_path', 'data/the-verdict.txt')
-    if not os.path.exists(data):
-        raise FileNotFoundError(f"Dataset file not found: {data}")
-    with open(data, 'r', encoding='utf-8') as f:
+    data_path = data_config.get('dataset_path', 'data/the-verdict.txt')
+    if not os.path.exists(data_path):
+        raise FileNotFoundError(f"Dataset file not found: {data_path}")
+    with open(data_path, 'r', encoding='utf-8') as f:
         text_data = f.read()
     
     split_ratio = data_config.get('train_ratio', 0.9)

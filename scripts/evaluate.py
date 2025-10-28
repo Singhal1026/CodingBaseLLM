@@ -8,18 +8,16 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 import math
 
+from model.transformer import GPTModel
+from data.dataset import TextDataset
 
 project_dir = Path(__file__).parent.parent
 sys.path.insert(0, str(project_dir))
 print(sys.path)
 
 
-from model.transformer import GPTModel
-from data.dataset import TextDataset
-
-
 def load_config(config_path):
-    print(f"📄 Loading config from {config_path}...")
+    print(f"Loading config from {config_path}...")
     with open(config_path, 'r') as f:
         config = yaml.safe_load(f)
     return config
@@ -28,15 +26,7 @@ def load_config(config_path):
 def load_model(config: dict, device: str):
     model_config = config['model']
 
-    model = GPTModel(
-        vocab_size = model_config.get('vocab_size', 50257),
-        n_layers = model_config.get('n_layers', 12),
-        n_heads = model_config.get('n_heads', 12),
-        d_model = model_config.get('d_model', 768),
-        d_ff = model_config.get('d_ff', 3072),
-        seq_len = model_config.get('seq_len', 256),
-        dropout = model_config.get('dropout', 0.1)
-    )
+    model = GPTModel(config=model_config)
 
     model_path = config['evaluation'].get('model_checkpoint', 'checkpoints/latest_checkpoint.pt')
     print(f"Loading model weights from {model_path}...")
@@ -87,3 +77,36 @@ def evaluate_model(model, dataloader, loss_fn, device):
     perplexity = math.exp(avg_loss) if avg_loss < 100 else float('inf')
 
     return avg_loss, perplexity
+
+
+if __name__ == "__main__":
+    config_path = "configs/gpt_small.yaml"
+
+    config = load_config(config_path)
+
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    print(f"Using device: {device.upper()}")
+
+    model = load_model(config, device)
+
+    eval_config = config['evaluation']
+    batch_size = eval_config.get('batch_size', 8)
+    stride = eval_config.get('stride', 32)
+    eval_text_path = eval_config.get('eval_dataset_path', 'data/eval_data.txt')
+
+    context_length = config['model'].get('seq_len', 256)
+
+    with open(eval_text_path, 'r', encoding='utf-8') as f:
+        text_data = f.read()
+
+    eval_dataset = TextDataset(text_data, context_length, stride)
+    eval_loader = DataLoader(eval_dataset, batch_size=batch_size, shuffle=False, drop_last=True)
+
+    print("Evaluation Data Summary:")
+    print("Batches =", len(eval_loader), ", Samples =", len(eval_dataset))
+
+    loss_fn = nn.CrossEntropyLoss()
+
+    avg_loss, perplexity = evaluate_model(model, eval_loader, loss_fn, device)
+
+    print(f"Evaluation Results - Avg Loss: {avg_loss:.4f}, Perplexity: {perplexity:.4f}")
