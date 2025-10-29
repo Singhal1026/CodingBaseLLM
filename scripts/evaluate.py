@@ -8,12 +8,12 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 import math
 
-from model.transformer import GPTModel
-from data.dataset import TextDataset
-
 project_dir = Path(__file__).parent.parent
 sys.path.insert(0, str(project_dir))
 print(sys.path)
+
+from model.transformer import GPTModel
+from data.dataset import TextDataset
 
 
 def load_config(config_path):
