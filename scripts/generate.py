@@ -46,6 +46,30 @@ def top_k_sampling(logits: torch.Tensor, top_k: int = 5) -> torch.Tensor:
     token_id = top_k_indices[torch.arange(logits.size(0)), sampled_indices]
     return token_id
 
+
+def top_p_sampling(logits: torch.Tensor, top_p: float = 0.9) -> torch.Tensor:
+
+    sorted_logits, sorted_indices = torch.sort(logits, descending=True)
+
+    probs = F.softmax(sorted_logits, dim=-1)
+
+    cumulative_probs = torch.cumsum(probs, dim=-1)
+
+    sorted_indices_to_remove = cumulative_probs > top_p
+
+    sorted_indices_to_remove[0] = False
+    
+    sorted_logits[sorted_indices_to_remove] = float('-inf')
+    
+    probs = F.softmax(sorted_logits, dim=-1)
+    
+    sampled_index = torch.multinomial(probs, num_samples=1)
+    
+    token_id = sorted_indices[sampled_index]
+    
+    return token_id
+
+
 def generate_next_tokens(model, max_new_tokens, idx, seq_len, temperature=1.0, top_k=None):
     # idx (batch_size, seq_len) 
     for _ in range(max_new_tokens):
