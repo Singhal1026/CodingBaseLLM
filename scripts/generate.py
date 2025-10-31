@@ -57,6 +57,7 @@ def top_p_sampling(logits: torch.Tensor, top_p: float = 0.9) -> torch.Tensor:
 
     sorted_indices_to_remove = cumulative_probs > top_p
 
+    # be sure to keep at least one token
     sorted_indices_to_remove[0] = False
     
     sorted_logits[sorted_indices_to_remove] = float('-inf')
@@ -68,6 +69,64 @@ def top_p_sampling(logits: torch.Tensor, top_p: float = 0.9) -> torch.Tensor:
     token_id = sorted_indices[sampled_index]
     
     return token_id
+
+@torch.no_grad()
+def generate_text(
+    model: GPTModel,
+    tokenizer: Tokenizer,
+    prompt: str,
+    max_length: int = 100,
+    temperature: float = 1.0,
+    sampling_strategy: str = 'top_k',
+    top_k: int = 50,
+    top_p: float = 0.9,
+    device: str = 'cpu'
+)-> str:
+    model.eval()
+
+    input_ids = tokenizer.encode(prompt)
+    input_tensor = torch.tensor([input_ids], device=device)
+
+    generated = input_tensor
+
+    for _ in range(max_length):
+
+        end_token_id = tokenizer.encode("<|endoftext|>")[0] if hasattr(tokenizer, 'encode') else None
+
+        if generated.size(1) > model.config['max_seq_len']:
+            input_tensor = generated[:, -model.config['max_seq_len']:]
+        else:
+            input_tensor = generated
+
+        outputs = model(input_tensor)
+
+        next_token_logits = outputs[:, -1, :] / temperature
+
+        # Sample next token based on strategy
+        if sampling_strategy == 'greedy':
+            next_token = torch.argmax(next_token_logits, dim=-1).unsqueeze(0)
+        elif sampling_strategy == 'top_k':
+            next_token = top_k_sampling(next_token_logits, k=top_k)
+        elif sampling_strategy == 'top_p':
+            next_token = top_p_sampling(next_token_logits, p=top_p)
+        else:
+            raise ValueError(f"Unknown sampling strategy: {sampling_strategy}")
+        
+        # Append to generated sequence
+        generated = torch.cat([generated, next_token.unsqueeze(0)], dim=1)
+        
+        # Stop if we generate an end token
+        if end_token_id is not None and next_token.item() == end_token_id:
+            break
+    
+    # Decode generated tokens
+    generated_text = tokenizer.decode(generated[0].tolist())
+    
+    return generated_text
+            
+
+    
+
 
 
 def generate_next_tokens(model, max_new_tokens, idx, seq_len, temperature=1.0, top_k=None):
