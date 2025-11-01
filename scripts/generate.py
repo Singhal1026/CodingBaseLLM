@@ -125,6 +125,16 @@ def generate_text(
     return generated_text
             
 
+def main(config = "configs/gpt_small.yaml"):
+    pass
+
+
+
+
+
+if __name__ == "__main__":
+    config = "configs/gpt_small.yaml"
+    main(config = config)
     
 
 
