@@ -118,7 +118,7 @@ class GPTModel(nn.Module):
         self.input_embeddings = InputEmbedding(
             config['vocab_size'],
             config['d_model'],
-            config['seq_len'],
+            config['seq_len'], 
             config['dropout_rate']
         )
 
