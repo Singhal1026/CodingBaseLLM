@@ -126,15 +126,34 @@ def generate_text(
             
 
 def main(config = "configs/gpt_small.yaml"):
-    pass
+    config = load_config(config)
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    model = load_model(config, checkpoint_path=config['training']['checkpoint_path'], device=device)
+    tokenizer = Tokenizer(config['tokenizer']['vocab_path'])
+    prompt = "Once upon a time"
+    generated_text = generate_text(
+        model=model,
+        tokenizer=tokenizer,
+        prompt=prompt,
+        max_length=10,
+        temperature=1.0,
+        sampling_strategy='top_k',
+        top_k=50,
+        device=device
+    )
+    print("Generated Text:")
+    print(generated_text)
+
 
 
 
 
 
 if __name__ == "__main__":
-    config = "configs/gpt_small.yaml"
+    config = "configs/gpt_small.yaml"    
     main(config = config)
+
     
 
 
