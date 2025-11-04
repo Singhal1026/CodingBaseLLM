@@ -115,6 +115,9 @@ class TransformerBlock(nn.Module):
 class GPTModel(nn.Module):
     def __init__(self, config):
         super().__init__()
+
+        self.config = config
+        
         self.input_embeddings = InputEmbedding(
             config['vocab_size'],
             config['d_model'],
