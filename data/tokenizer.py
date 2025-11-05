@@ -20,8 +20,8 @@ class Tokenizer:
             tokens = tokens[:max_len]
         return torch.tensor(tokens, dtype=torch.long)
         
-    def decode(self, token_ids: Union[torch.tensor, List[int]]) -> str:
-        if isinstance(token_ids, torch.tensor):
+    def decode(self, token_ids: Union[torch.Tensor, List[int]]) -> str:
+        if isinstance(token_ids, torch.Tensor):
             token_ids = token_ids.tolist()
         return self.tokenizer.decode(token_ids)
 

@@ -85,6 +85,3 @@ seed: 42
 
 ![Transformer Architecture](transformer_arch.png)
 
-## Status
-
-This project is currently incomplete and under active development. Contributions and feedback are welcome!

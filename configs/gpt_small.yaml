@@ -43,5 +43,10 @@ evaluation:
   eval_dataset_path: data/eval_data.txt
   model_checkpoint: checkpoints/latest_checkpoint.pt
 
+tokenizer:
+  type: gpt2
+  encoding_path: data/gpt2_encoding
+  offline: True
+
 device: auto
 seed: 42

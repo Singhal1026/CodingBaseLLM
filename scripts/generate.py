@@ -85,7 +85,7 @@ def generate_text(
     model.eval()
 
     input_ids = tokenizer.encode(prompt)
-    input_tensor = torch.tensor([input_ids], device=device)
+    input_tensor = input_ids.unsqueeze(0).to(device)
 
     generated = input_tensor
 
@@ -93,8 +93,8 @@ def generate_text(
 
         end_token_id = tokenizer.encode("<|endoftext|>")[0] if hasattr(tokenizer, 'encode') else None
 
-        if generated.size(1) > model.config['model']['seq_len']:
-            input_tensor = generated[:, -model.config['model']['seq_len']:]
+        if generated.size(1) > model.config['seq_len']:
+            input_tensor = generated[:, -model.config['seq_len']:]
         else:
             input_tensor = generated
 
@@ -106,9 +106,9 @@ def generate_text(
         if sampling_strategy == 'greedy':
             next_token = torch.argmax(next_token_logits, dim=-1).unsqueeze(0)
         elif sampling_strategy == 'top_k':
-            next_token = top_k_sampling(next_token_logits, k=top_k)
+            next_token = top_k_sampling(next_token_logits, top_k=top_k)
         elif sampling_strategy == 'top_p':
-            next_token = top_p_sampling(next_token_logits, p=top_p)
+            next_token = top_p_sampling(next_token_logits, top_p=top_p)
         else:
             raise ValueError(f"Unknown sampling strategy: {sampling_strategy}")
         
@@ -129,17 +129,19 @@ def main(config = "configs/gpt_small.yaml"):
     config = load_config(config)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    model = load_model(config, checkpoint_path=config['training']['checkpoint_path'], device=device)
-    tokenizer = Tokenizer(config['tokenizer']['vocab_path'])
-    prompt = "Once upon a time"
+    model_path = config['evaluation'].get('model_checkpoint', 'checkpoints/latest_checkpoint.pt')
+
+    model = load_model(config, checkpoint_path=model_path, device=device)
+    tokenizer = Tokenizer(path=config['tokenizer']['encoding_path'], offline=config['tokenizer'].get('offline', False))
+    prompt = "He was silent; but I felt"
     generated_text = generate_text(
         model=model,
         tokenizer=tokenizer,
         prompt=prompt,
-        max_length=10,
+        max_length=100,
         temperature=1.0,
         sampling_strategy='top_k',
-        top_k=50,
+        top_p=0.9,
         device=device
     )
     print("Generated Text:")
