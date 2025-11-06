@@ -83,5 +83,5 @@ seed: 42
 
 ## Transformer Architecture
 
-![Transformer Architecture](transformer_arch.png)
+![Transformer Architecture](transformer_arch.png) 
 
